@@ -13,7 +13,7 @@ import faiss
 import numpy as np
 from rank_bm25 import BM25Okapi
 
-from src.config import RRF_K, TOP_K
+from src.config import MIN_CHUNKS, MIN_RELEVANCE, RRF_K, TOP_K
 
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
@@ -59,10 +59,28 @@ def reciprocal_rank_fusion(rankings: list[list[int]], k: int = RRF_K) -> list[in
     return sorted(fused, key=lambda d: fused[d], reverse=True)
 
 
+def _trim_by_relevance(ids, query_vec, faiss_index, chunks, min_chunks, min_relevance):
+    """Drop trailing chunks whose cosine to the query is below the relevance floor.
+
+    Keeps every chunk that clears the floor (in fused-rank order). If fewer than
+    min_chunks clear it, falls back to the most cosine-relevant chunks so the 2-5
+    rubric floor is always met.
+    """
+    scored = [(i, cosine_similarity(query_vec, faiss_index.reconstruct(int(i)))) for i in ids]
+    keep = [i for i, sim in scored if sim >= min_relevance]
+    if len(keep) < min_chunks:
+        keep = [i for i, _ in sorted(scored, key=lambda t: t[1], reverse=True)[:min_chunks]]
+    return [chunks[i] for i in keep]
+
+
 def hybrid_search(query, query_vec, faiss_index, bm25, chunks, top_k=TOP_K) -> list[dict]:
-    """Dense (FAISS cosine) + sparse (BM25), fused with RRF; return top_k chunks."""
+    """Dense (FAISS cosine) + sparse (BM25), fused with RRF; return 2..top_k chunks.
+
+    After ranking, trailing chunks whose cosine to the query falls below MIN_RELEVANCE
+    are dropped so short keyword queries are not padded with off-topic context.
+    """
     pool = max(top_k * 2, 10)
     dense = faiss_search(faiss_index, query_vec, pool)
     sparse = bm25_search(bm25, query, pool)
-    fused = reciprocal_rank_fusion([dense, sparse])
-    return [chunks[i] for i in fused[:top_k]]
+    fused = reciprocal_rank_fusion([dense, sparse])[:top_k]
+    return _trim_by_relevance(fused, query_vec, faiss_index, chunks, MIN_CHUNKS, MIN_RELEVANCE)

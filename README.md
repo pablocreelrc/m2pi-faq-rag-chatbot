@@ -54,7 +54,7 @@ export OPENAI_API_KEY=sk-...              # (alternative to editing .env)
 | `OPENAI_API_KEY` | yes | — | OpenAI API key. Loaded from `.env`; never committed. |
 | `EMBEDDING_MODEL` | no | `text-embedding-3-small` | Model for chunk + query embeddings. |
 | `OPENAI_MODEL` | no | `gpt-5.4-mini` | Chat model for the answer + evaluator. |
-| `TOP_K` | no | `4` | Chunks retrieved per query (clamped to 2–5). |
+| `TOP_K` | no | `4` | Max chunks per query; results below a cosine relevance floor are trimmed (min 2). |
 
 ## Run
 
@@ -95,6 +95,8 @@ scores) are committed under `outputs/`.
   acronyms like `SSO`, `MFA`, `SLA`, prices, and dates. Reciprocal Rank Fusion combines the two
   rankings without needing their score scales to be comparable, giving more robust retrieval than
   either method alone. Embeddings are L2-normalized so FAISS inner product equals cosine similarity.
+  Retrieved chunks are then trimmed by a cosine relevance floor (keeping at least two), so short
+  keyword queries return a few tight chunks instead of being padded with off-topic context.
 
 More detail in [`reports/technical-decisions.md`](reports/technical-decisions.md).
 

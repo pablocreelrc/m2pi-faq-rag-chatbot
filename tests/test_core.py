@@ -19,6 +19,7 @@ from src.config import CHUNK_MAX_TOKENS, CHUNK_MIN_TOKENS, FAQ_PATH
 from src.evaluator import evaluate_answer
 from src.generation import REQUIRED_KEYS, generate_answer
 from src.retrieval import (
+    bm25_search,
     build_bm25,
     build_faiss_index,
     cosine_similarity,
@@ -107,11 +108,21 @@ def test_hybrid_search_returns_between_two_and_five():
     assert all(set(c) == {"id", "text", "n_tokens"} for c in out)
 
 
-def test_hybrid_search_finds_keyword_match_via_bm25():
+def test_bm25_search_finds_keyword_match():
+    # BM25 surfaces exact-term matches (e.g. the acronym "SSO") independent of vectors.
+    chunks, _faiss_index, bm25, _vecs = _toy_corpus()
+    ranked = bm25_search(bm25, "How do I enable SSO?", k=3)
+    assert chunks[ranked[0]]["text"].count("SSO") >= 1  # top BM25 hit is the SSO chunk
+
+
+def test_hybrid_search_trims_irrelevant_chunks_to_floor():
+    # Orthogonal corpus: only one chunk matches the query vector; the rest are noise.
+    # The relevance trim should drop the noise and fall back to the 2-chunk floor,
+    # with the single true match ranked first.
     chunks, faiss_index, bm25, vecs = _toy_corpus()
-    # Query vector points to an unrelated chunk; BM25 should still surface "SSO".
-    out = hybrid_search("How do I enable SSO?", vecs[0], faiss_index, bm25, chunks, top_k=3)
-    assert any("SSO" in c["text"] for c in out)
+    out = hybrid_search("zzz no lexical overlap", vecs[0], faiss_index, bm25, chunks, top_k=4)
+    assert len(out) == 2  # MIN_CHUNKS floor, not padded to top_k
+    assert out[0]["text"] == chunks[0]["text"]  # the one true match is kept first
 
 
 # --- generation contract -----------------------------------------------------

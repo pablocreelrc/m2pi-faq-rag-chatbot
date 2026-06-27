@@ -2,26 +2,26 @@
   {
     "user_question": "How many vacation days do new employees get in their first year?",
     "score": 9,
-    "reason": "The answer is well supported by chunk D3, which explicitly states that full-time employees accrue 15 paid vacation days during their first year of employment. D2 also supports the first-year context by saying vacation accrues monthly and a first-year employee earns 1.25 days per month, which totals 15 days. The answer is accurate and directly addresses the question, though it could be slightly stronger by mentioning that this applies to full-time employees and that accrual is monthly."
+    "reason": "The answer is well supported by chunk D3, which explicitly states that full-time employees accrue 15 paid vacation days during their first year of employment. D2 also supports the first-year vacation policy by saying a first-year employee earns 1.25 days per month, which totals 15 days annually. The answer is accurate and directly addresses the question, though it does not mention that the policy is for full-time employees or explain the monthly accrual detail."
   },
   {
     "user_question": "Can employees carry over unused vacation days to the next year?",
     "score": 10,
-    "reason": "The retrieved chunks are highly relevant to the vacation carryover question, especially D1 and D2, which explicitly state that up to 5 unused vacation days may be carried into the next calendar year and any excess is forfeited on December 31. The answer matches those chunks exactly and does not invent additional policy details. It fully addresses the question with a direct yes/no plus the carryover limit."
+    "reason": "The retrieved chunks are highly relevant to the vacation carryover policy, especially D1 and D2, which explicitly state that up to 5 unused vacation days may carry into the next calendar year and any excess is forfeited on December 31. The answer accurately restates this without adding unsupported details. It fully addresses the question about whether employees can carry over unused vacation days."
   },
   {
     "user_question": "How do I enable Single Sign-On (SSO)?",
     "score": 10,
-    "reason": "The answer is well supported by chunks D1 and D2, which directly state that SSO is available on Business and Enterprise plans and explain the exact enablement path via Settings > Security > SSO. It also correctly includes the enforced-SSO behavior that password login is disabled for members except the Owner with a break-glass password. No obvious invented facts appear, and the response fully addresses how to enable SSO."
+    "reason": "The answer is well supported by the retrieved chunks, especially D2, which explicitly says SSO is available on the Business and Enterprise plans and that an Owner enables it by uploading identity provider metadata under Settings > Security > SSO. It does not invent facts and matches the wording closely. It is also complete for the question asked, though it omits extra details from D2 about enforced SSO and MFA, which were not required."
   },
   {
     "user_question": "What does the Business plan cost and what uptime SLA does it include?",
     "score": 10,
-    "reason": "The retrieved chunks are highly relevant: D2 explicitly states the Business plan costs $12 per seat per month, and D1 explicitly states the Business plan includes a 99.9 percent uptime SLA. The answer matches both facts exactly, uses the provided context without inventing details, and fully addresses both parts of the question."
+    "reason": "The answer is fully supported by the retrieved chunks. D2 explicitly states the Business plan costs $12 per seat per month, and D1 says the Business plan includes a 99.9 percent uptime SLA. The response is accurate, uses the provided context directly, and answers both parts of the question completely."
   },
   {
     "user_question": "How do I request time off?",
     "score": 10,
-    "reason": "The answer is fully supported by D1, which explicitly says to open the Time Off tab, select dates, choose the leave type, and submit; it also states the request is routed to the manager for approval. D3 adds that managers receive notifications and most requests are approved within two business days, but the answer does not invent anything beyond the retrieved text. It directly addresses the question and is complete for the basic request flow."
+    "reason": "The retrieved chunks are highly relevant, especially D1, which directly states the exact steps for requesting time off: open the Time Off tab, select dates, choose leave type, and submit; it also mentions manager approval. The answer accurately paraphrases D1 without inventing details. It is complete for the user’s question, though it omits extra context from D1/D3 such as notifications and approval timing, which are not necessary to answer the question."
   }
 ]

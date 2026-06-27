@@ -31,7 +31,12 @@ from src.retrieval import build_bm25, hybrid_search
 
 def load_index(index_dir: str = INDEX_DIR):
     """Load the persisted FAISS index + chunks and rebuild the BM25 index."""
-    faiss_index = faiss.read_index(os.path.join(index_dir, "faiss.index"))
+    index_path = os.path.join(index_dir, "faiss.index")
+    if not os.path.exists(index_path):
+        raise RuntimeError(
+            f"No index found at '{index_path}'. Run 'python -m src.build_index' first."
+        )
+    faiss_index = faiss.read_index(index_path)
     with open(os.path.join(index_dir, "chunks.pkl"), "rb") as fh:
         chunks = pickle.load(fh)
     bm25 = build_bm25([c["text"] for c in chunks])
@@ -57,6 +62,10 @@ def main() -> None:
     parser.add_argument("question", help="the user question to answer")
     parser.add_argument("--no-eval", action="store_true", help="skip the bonus evaluator agent")
     args = parser.parse_args()
+
+    if not args.question.strip():
+        print(json.dumps({"error": "Question must not be empty."}), file=sys.stderr)
+        raise SystemExit(2)
 
     settings = Settings.from_env()
     client = get_client(settings)

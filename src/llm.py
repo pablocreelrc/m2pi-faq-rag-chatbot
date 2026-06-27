@@ -12,8 +12,8 @@ from typing import Callable, TypeVar
 
 from openai import (
     APIConnectionError,
-    APIError,
     APITimeoutError,
+    InternalServerError,
     OpenAI,
     RateLimitError,
 )
@@ -22,8 +22,9 @@ from src.config import Settings
 
 T = TypeVar("T")
 
-# Transient errors worth retrying. A hard 4xx (bad request, auth) is not here.
-RETRYABLE = (RateLimitError, APITimeoutError, APIConnectionError, APIError)
+# Transient errors worth retrying: rate limits, timeouts, connection drops, and 5xx.
+# Hard 4xx errors (bad request, auth, not found) are deliberately NOT retried.
+RETRYABLE = (RateLimitError, APITimeoutError, APIConnectionError, InternalServerError)
 
 
 def get_client(settings: Settings | None = None) -> OpenAI:

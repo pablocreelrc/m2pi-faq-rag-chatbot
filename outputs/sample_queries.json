@@ -21,12 +21,10 @@
   },
   {
     "user_question": "How do I enable Single Sign-On (SSO)?",
-    "system_answer": "SSO is available on the Business and Enterprise plans. To enable it, an Owner uploads the identity provider metadata in Settings > Security > SSO. If SSO is enforced, password login is disabled for all members except the Owner, who keeps a break-glass password.",
+    "system_answer": "SSO is available on the Business and Enterprise plans. To enable it, an Owner uploads the identity provider metadata in Settings > Security > SSO.",
     "chunks_related": [
       "If the link expires, an admin can resend the invitation from the same screen. Deactivating a user preserves their historical records but immediately revokes their access. Single Sign-On and Security PeopleFlow supports Single Sign-On (SSO) through SAML 2.0 and integrates with Okta, Microsoft Entra ID, and Google Workspace. SSO is available on the Business and Enterprise plans.",
-      "SSO is available on the Business and Enterprise plans. To enable it, an Owner uploads the identity provider metadata under Settings, then Security, then SSO. When SSO is enforced, password login is disabled for all members except the Owner, who keeps a break-glass password in case the identity provider is unavailable. Multi-factor authentication (MFA) is strongly recommended and can be required for all users by an Owner.",
-      "Enterprise customers can build custom reports and schedule them to be emailed automatically. Plans, Billing, and Support PeopleFlow offers three plans. The Starter plan costs $6 per seat per month and includes core records and time off. The Business plan costs $12 per seat per month and adds SSO, performance reviews, and integrations. The Enterprise plan offers custom pricing and adds data residency choices, custom reports, and a dedicated success manager.",
-      "Unused vacation up to a maximum of 5 days can be carried into the next calendar year; any balance above that cap is forfeited on December 31. Employees also receive 10 paid sick days per year, which do not carry over. Parental leave is 12 weeks of paid leave for the primary caregiver and 4 weeks for a secondary caregiver, available after 6 months of employment."
+      "SSO is available on the Business and Enterprise plans. To enable it, an Owner uploads the identity provider metadata under Settings, then Security, then SSO. When SSO is enforced, password login is disabled for all members except the Owner, who keeps a break-glass password in case the identity provider is unavailable. Multi-factor authentication (MFA) is strongly recommended and can be required for all users by an Owner."
     ]
   },
   {
@@ -41,7 +39,7 @@
   },
   {
     "user_question": "How do I request time off?",
-    "system_answer": "To request time off, open the Time Off tab, select the dates, choose the leave type, and submit the request. It will then be routed to your manager for approval.",
+    "system_answer": "To request time off, open the Time Off tab, select the dates, choose the leave type, and submit the request. It will be routed to your manager for approval.",
     "chunks_related": [
       "Parental leave is 12 weeks of paid leave for the primary caregiver and 4 weeks for a secondary caregiver, available after 6 months of employment. To request time off, an employee opens the Time Off tab, selects the dates, chooses the leave type, and submits. The request is routed to their manager for approval. Managers receive an email and an in-app notification, and most requests are approved within two business days.",
       "Unused vacation up to a maximum of 5 days can be carried into the next calendar year; any balance above that cap is forfeited on December 31. Employees also receive 10 paid sick days per year, which do not carry over. Parental leave is 12 weeks of paid leave for the primary caregiver and 4 weeks for a secondary caregiver, available after 6 months of employment.",

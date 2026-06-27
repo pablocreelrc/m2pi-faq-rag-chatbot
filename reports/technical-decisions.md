@@ -50,6 +50,18 @@ and dates — where exact-term matching outperforms semantics. BM25 covers that 
 cannot simply be added. RRF fuses by *rank* instead of raw score, which is robust and parameter-light.
 The `k = 60` constant is the standard value from the IR literature (Cormack et al., 2009).
 
+## Relevance trim: dynamic top-k
+
+**Choice.** After fusion, keep up to `TOP_K` (4) chunks, but drop any whose cosine similarity to
+the query falls below `MIN_RELEVANCE` (0.30); always keep at least `MIN_CHUNKS` (2).
+
+**Why.** A fixed top-k pads every answer to the same size, so a narrow question (e.g. "How do I
+enable SSO?") that has only one or two strongly relevant chunks would otherwise pull in off-topic
+context. Trimming by a cosine floor keeps `chunks_related` tight and on-topic — the SSO query
+returns 2 focused chunks while a broader question returns 4 — which both improves answer grounding
+and keeps retrieved-chunk relevance well above the rubric's 80% bar. The 2-chunk floor guarantees
+the rubric's 2–5 range is always honoured even when no chunk clears the threshold.
+
 ## Output contract and the evaluator
 
 **Choice.** `generate_answer` builds the result dict deterministically so the output always has
