@@ -1,0 +1,15 @@
+# M2PI FAQ RAG chatbot — pinned dependencies for reproducible installs.
+# Install with:  pip install -r requirements.txt
+# (uv users can instead run:  uv sync --extra dev)
+
+# --- Runtime ---
+openai==2.44.0
+python-dotenv==1.2.2
+numpy==2.5.0
+faiss-cpu==1.14.3
+rank-bm25==0.2.2
+tiktoken==0.13.0
+
+# --- Development / testing ---
+pytest==9.1.1
+ruff==0.15.20
