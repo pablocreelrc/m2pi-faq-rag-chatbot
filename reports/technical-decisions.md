@@ -2,18 +2,23 @@
 
 This note explains the main design choices behind the M2PI FAQ RAG chatbot and why each was made.
 
-## Chunking: sentence-aware with token overlap
+## Chunking: heading-aware, sentence-based, with token overlap
 
-**Choice.** Split the document on sentence boundaries, then greedily pack sentences into chunks of
-~90 tokens (`CHUNK_TARGET_TOKENS`) with a ~20-token overlap (`CHUNK_OVERLAP_TOKENS`). A too-small
-trailing chunk is merged into its predecessor so every chunk stays within the 50–500 token window.
+**Choice.** Split the document into sections by its headings (blank-line-delimited lines without
+terminal punctuation), then within each section greedily pack sentences into ~90-token chunks
+(`CHUNK_TARGET_TOKENS`) with a ~20-token overlap (`CHUNK_OVERLAP_TOKENS`). Text is never carried
+across a section boundary, and each chunk is prefixed with its section heading. Sentences above the
+500-token ceiling are hard-split, and any sub-floor chunk is merged with a neighbour in the same
+section, so every chunk stays inside the 50–500 token window for any input document.
 
-**Why.** Fixed-size character splits cut sentences in half, which fragments meaning and hurts both
-embedding quality and human readability of the retrieved context. Packing whole sentences keeps each
-chunk self-contained. The overlap means a fact that spans a boundary still appears intact in at
-least one chunk. Token counting uses `tiktoken` (cl100k_base) so chunk sizes are measured in the
-same units the embedding model consumes. On the supplied document this yields **25 chunks of 55–90
-tokens** — comfortably above the 20-chunk minimum and inside the size window.
+**Why.** Fixed-size character splits cut sentences mid-thought; packing whole sentences keeps each
+chunk self-contained, and the overlap preserves facts that straddle a boundary. Making it
+*heading-aware* matters more than it looks: headings have no terminal punctuation, so a naïve
+sentence splitter glues a heading onto the previous section's text — e.g. a security paragraph
+ending "...revokes their access. Single Sign-On and Security PeopleFlow supports..." would let a
+security chunk score highly on a vacation query (cross-topic bleed). Sectioning prevents that and
+gives each chunk its own heading as context. Token counts use `tiktoken` (cl100k_base), matching how
+the embedding model sees text. On the supplied document this yields **23 chunks of 55–126 tokens**.
 
 ## Embeddings: OpenAI `text-embedding-3-small`, L2-normalized
 
@@ -50,25 +55,46 @@ and dates — where exact-term matching outperforms semantics. BM25 covers that 
 cannot simply be added. RRF fuses by *rank* instead of raw score, which is robust and parameter-light.
 The `k = 60` constant is the standard value from the IR literature (Cormack et al., 2009).
 
-## Relevance trim: dynamic top-k
+## Relevance selection: relative cosine gap over the fused pool
 
-**Choice.** After fusion, keep up to `TOP_K` (4) chunks, but drop any whose cosine similarity to
-the query falls below `MIN_RELEVANCE` (0.30); always keep at least `MIN_CHUNKS` (2).
+**Choice.** BM25 + dense fusion builds a candidate pool (recall); the final chunks are then selected
+by cosine over that whole pool — keep chunks whose cosine trails the top hit by no more than
+`RELEVANCE_GAP` (0.08), ordered by cosine, capped at `TOP_K` (4), with a `MIN_CHUNKS` (2) floor.
 
-**Why.** A fixed top-k pads every answer to the same size, so a narrow question (e.g. "How do I
-enable SSO?") that has only one or two strongly relevant chunks would otherwise pull in off-topic
-context. Trimming by a cosine floor keeps `chunks_related` tight and on-topic — the SSO query
-returns 2 focused chunks while a broader question returns 4 — which both improves answer grounding
-and keeps retrieved-chunk relevance well above the rubric's 80% bar. The 2-chunk floor guarantees
-the rubric's 2–5 range is always honoured even when no chunk clears the threshold.
+**Why.** A *fixed* cosine floor (e.g. 0.30) is the wrong tool: `text-embedding-3-small` scores
+unrelated HR text in the ~0.16–0.35 band and related text in ~0.43–0.69, so any absolute cutoff
+sits inside the noise overlap — it keeps junk on one query and clips good chunks on another. A
+*relative* gap adapts to each query's own score scale. Selecting over the full fused pool (not just
+RRF's top-k) also matters: RRF sometimes ranks the genuinely closest chunk below lexical near-misses
+(an "annual discount" query had the correct billing chunk at cosine 0.46 but RRF buried it under
+0.33 vacation chunks); selecting by cosine across the pool surfaces it. Net effect: the discount
+query now returns two billing chunks instead of vacation noise, and the overtime query returns two
+on-topic chunks instead of four. The 2-chunk floor keeps the rubric's 2–5 range satisfied.
 
 ## Output contract and the evaluator
 
 **Choice.** `generate_answer` builds the result dict deterministically so the output always has
-**exactly** `user_question`, `system_answer`, `chunks_related` — the model only supplies the answer
-text. The bonus evaluator is a separate LLM-as-judge returning `{score, reason}`; its verdict is
-printed to stderr so the answer on stdout stays exactly three keys.
+**exactly** `user_question`, `system_answer`, `chunks_related` (the retrieved passages supplied as
+context) — the model only supplies the answer text, and bad/empty model output degrades to a safe
+"I don't have that information" rather than crashing. The bonus evaluator is a separate LLM-as-judge
+returning `{score, reason}`; it is **isolated** (a failure prints a note to stderr and never
+suppresses the answer) and its verdict goes to stderr so stdout stays exactly three keys. The judge
+is instructed that a correct "information not available" answer is high-quality when the chunks
+genuinely lack the fact, so it does not penalize safe refusals.
 
 **Why.** Enforcing the contract in code (rather than trusting the model to emit the right keys)
-guarantees valid JSON for every query. Keeping the evaluator output separate avoids polluting the
-required three-key schema while still providing automated quality assurance.
+guarantees valid JSON for every query, and isolating the bonus QA step means it can never take down
+the core deliverable.
+
+## Robustness & security
+
+**Choice.** Chunks are persisted as **JSON, not pickle**; the user question is length-capped before
+any API call; ingested text is stripped of control characters; and retrieved context is fenced as
+explicit "reference data only" with a system-prompt instruction never to follow instructions inside
+it.
+
+**Why.** `pickle.load` executes arbitrary code, so a tampered index file would be an RCE vector —
+JSON cannot. Capping input avoids oversized-request crashes and wasted spend. Fencing context plus
+the deterministic output assembly limits prompt-injection blast radius (direct injection attempts
+are refused in testing), which matters as soon as the system ingests documents it does not fully
+control.

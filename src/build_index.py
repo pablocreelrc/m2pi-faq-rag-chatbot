@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import os
-import pickle
 
 import faiss
 
@@ -26,8 +25,9 @@ def _persist(index_dir: str, chunks: list[dict], vectors) -> dict:
     """Write the FAISS index, the chunk texts, and a metadata summary to disk."""
     os.makedirs(index_dir, exist_ok=True)
     faiss.write_index(build_faiss_index(vectors), os.path.join(index_dir, "faiss.index"))
-    with open(os.path.join(index_dir, "chunks.pkl"), "wb") as fh:
-        pickle.dump(chunks, fh)
+    # Store chunks as JSON (not pickle): JSON cannot execute code on load.
+    with open(os.path.join(index_dir, "chunks.json"), "w", encoding="utf-8") as fh:
+        json.dump(chunks, fh, ensure_ascii=False)
     meta = {
         "n_chunks": len(chunks),
         "n_embeddings": int(vectors.shape[0]),

@@ -20,8 +20,8 @@ chunks, retrieves the most relevant ones, and has an LLM generate a grounded ans
 
 ## What it does
 
-- **Indexing pipeline** — loads the FAQ document, chunks it (sentence-aware, 25 chunks of
-  55–90 tokens), embeds every chunk with OpenAI, and stores a FAISS index + chunk text on disk.
+- **Indexing pipeline** — loads the FAQ document, chunks it (heading-aware, 23 chunks of
+  55–126 tokens), embeds every chunk with OpenAI, and stores a FAISS index + chunk text (JSON) on disk.
 - **Query pipeline** — embeds the question, runs **hybrid retrieval** (dense FAISS cosine search
   fused with lexical BM25 via Reciprocal Rank Fusion), assembles the top chunks into context, and
   the LLM generates a grounded answer as strict three-key JSON.
@@ -66,7 +66,7 @@ Run from the repository root:
 ```bash
 # Step 1 — build the index from data/faq_document.txt
 python -m src.build_index
-# -> Indexed 25 chunks (25 embeddings, dim=1536) | tokens 55-90 -> index/
+# -> Indexed 23 chunks (23 embeddings, dim=1536) | tokens 55-126 -> index/
 
 # Step 2 — ask a question (answer prints as JSON to stdout)
 python -m src.query "How many vacation days do new employees get?"
@@ -88,28 +88,28 @@ scores) are committed under `outputs/`.
 
 ## Technical decisions
 
-- **Chunking — sentence-aware with token overlap.** The document is split on sentence boundaries
-  and greedily packed to ~90 tokens with a ~20-token overlap. Sentence boundaries keep each chunk
-  semantically coherent (versus fixed-size splits that cut mid-sentence), and the overlap preserves
-  context that straddles a boundary. Token counts use `tiktoken`, so the 50–500 token window is
-  measured the same way the embedding model sees text.
+- **Chunking — heading-aware, sentence-based, with token overlap.** The document is split into
+  sections by its headings (so a heading never bleeds into a neighbouring topic), and within each
+  section sentences are packed to ~90 tokens with a ~20-token overlap; each chunk is prefixed with
+  its heading. Over-long sentences are hard-split and sub-floor chunks merged, so every chunk stays
+  in the 50–500 token window (measured with `tiktoken`).
 - **Search — hybrid (FAISS cosine + BM25, RRF fusion).** Dense embeddings capture semantic meaning
   but blur exact terms; BM25 nails literal matches the dense model misses — product names and
   acronyms like `SSO`, `MFA`, `SLA`, prices, and dates. Reciprocal Rank Fusion combines the two
-  rankings without needing their score scales to be comparable, giving more robust retrieval than
-  either method alone. Embeddings are L2-normalized so FAISS inner product equals cosine similarity.
-  Retrieved chunks are then trimmed by a cosine relevance floor (keeping at least two), so short
-  keyword queries return a few tight chunks instead of being padded with off-topic context.
+  rankings into a candidate pool; embeddings are L2-normalized so FAISS inner product equals cosine.
+  The final chunks are then selected by a **relative cosine gap** (keep chunks within `RELEVANCE_GAP`
+  of the top hit, min two), which adapts to each query's score scale and surfaces the genuinely
+  closest chunk even when RRF ranked it lower — so answers get tight, on-topic context, not padding.
 
 More detail in [`reports/technical-decisions.md`](reports/technical-decisions.md).
 
 ## Project layout
 
 ```
-data/faq_document.txt        source FAQ document (>=1000 words, yields 25 chunks)
+data/faq_document.txt        source FAQ document (>=1000 words, yields 23 chunks)
 src/config.py                settings (env) + tunable chunking/retrieval constants
 src/llm.py                   OpenAI client + retry-with-backoff wrapper
-src/chunking.py              load + sentence-aware chunking (load_and_chunk_document)
+src/chunking.py              load + heading-aware chunking (load_and_chunk_document)
 src/embeddings.py            OpenAI embeddings, L2-normalized (generate_embeddings/embed_query)
 src/retrieval.py             cosine_similarity, FAISS, BM25, RRF, hybrid_search
 src/generation.py            context assembly + generate_answer (strict 3-key JSON)
@@ -118,7 +118,7 @@ src/build_index.py           indexing pipeline entrypoint  (python -m src.build_
 src/query.py                 query pipeline entrypoint      (python -m src.query "...")
 outputs/sample_queries.json  5 example query/answer pairs (proof it runs end-to-end)
 outputs/sample_evaluations.json  evaluator scores for those same 5 queries
-index/                       persisted FAISS index + chunk text (git-ignored, regenerated)
+index/                       persisted FAISS index + chunks.json (git-ignored, regenerated)
 reports/technical-decisions.md  deeper write-up of chunking + retrieval choices
 tests/test_core.py           mocked unit + integration tests (no API key needed)
 ```
@@ -129,9 +129,21 @@ tests/test_core.py           mocked unit + integration tests (no API key needed)
 pytest -q          # or:  uv run pytest -q
 ```
 
-Tests run **without an API key** — the OpenAI calls are mocked. They verify the chunk count and
-token bounds, explicit cosine similarity, RRF ordering, hybrid retrieval returning 2–5 chunks, the
-exact three-key output contract, and the evaluator's score/reason validation.
+Tests run **without an API key** — the OpenAI calls are mocked. The 20 tests cover chunk count and
+token bounds, oversize-sentence splitting, no cross-section heading bleed, explicit cosine, RRF
+ordering, BM25 keyword match, the relevance trim/floor, the exact three-key contract, graceful
+handling of malformed model output, the evaluator's score/reason validation, and the retry wrapper
+(retries transient errors, surfaces after exhaustion, does not retry 4xx).
+
+## Robustness & security
+
+- Chunks are stored as **JSON, not pickle** (pickle would execute code on load).
+- Retrieved context is fenced as "reference data only" and the model is told never to follow
+  instructions inside it; the strict three-key output is assembled in code. Direct prompt-injection
+  attempts are refused in testing. (For fully untrusted documents this reduces, not eliminates,
+  indirect-injection risk.)
+- The user question is length-capped, ingested text is stripped of control characters, and the
+  bonus evaluator is isolated so its failure can never suppress the answer.
 
 ## Known limitations
 

@@ -28,8 +28,11 @@ CHUNK_MAX_TOKENS = 500      # rubric ceiling per chunk
 # --- Retrieval ---
 TOP_K = 4            # max chunks fed to the LLM (rubric expects 2-5)
 MIN_CHUNKS = 2       # always return at least this many (rubric floor)
-MIN_RELEVANCE = 0.30 # cosine floor: trailing chunks below this are dropped as noise
+RELEVANCE_GAP = 0.08 # drop chunks whose cosine trails the top hit by more than this
 RRF_K = 60           # reciprocal-rank-fusion constant (standard from the IR literature)
+
+# --- Input limits ---
+MAX_QUESTION_CHARS = 2000  # reject pathologically long questions before any API call
 
 # --- Paths ---
 INDEX_DIR = "index"

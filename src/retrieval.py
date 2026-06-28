@@ -13,7 +13,7 @@ import faiss
 import numpy as np
 from rank_bm25 import BM25Okapi
 
-from src.config import MIN_CHUNKS, MIN_RELEVANCE, RRF_K, TOP_K
+from src.config import MIN_CHUNKS, RELEVANCE_GAP, RRF_K, TOP_K
 
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
@@ -59,28 +59,32 @@ def reciprocal_rank_fusion(rankings: list[list[int]], k: int = RRF_K) -> list[in
     return sorted(fused, key=lambda d: fused[d], reverse=True)
 
 
-def _trim_by_relevance(ids, query_vec, faiss_index, chunks, min_chunks, min_relevance):
-    """Drop trailing chunks whose cosine to the query is below the relevance floor.
+def _trim_by_relevance(ids, query_vec, faiss_index, chunks, min_chunks, gap, top_k):
+    """Select the most relevant chunks from the candidate pool, by cosine.
 
-    Keeps every chunk that clears the floor (in fused-rank order). If fewer than
-    min_chunks clear it, falls back to the most cosine-relevant chunks so the 2-5
-    rubric floor is always met.
+    Keeps chunks whose cosine to the query trails the top hit by no more than
+    ``gap`` (a *relative* gap that adapts to each query's score scale, unlike a
+    fixed floor), ordered by cosine and capped at top_k. Running over the full
+    fused pool -- not just RRF's top_k -- lets the genuinely closest chunk surface
+    even when RRF ranked it lower. Falls back to the top min_chunks so 2-5 holds.
     """
-    scored = [(i, cosine_similarity(query_vec, faiss_index.reconstruct(int(i)))) for i in ids]
-    keep = [i for i, sim in scored if sim >= min_relevance]
+    sims = {i: cosine_similarity(query_vec, faiss_index.reconstruct(int(i))) for i in ids}
+    top = max(sims.values()) if sims else 0.0
+    keep = sorted((i for i in ids if sims[i] >= top - gap), key=lambda i: sims[i], reverse=True)
     if len(keep) < min_chunks:
-        keep = [i for i, _ in sorted(scored, key=lambda t: t[1], reverse=True)[:min_chunks]]
-    return [chunks[i] for i in keep]
+        keep = sorted(ids, key=lambda i: sims[i], reverse=True)[:min_chunks]
+    return [chunks[i] for i in keep[:top_k]]
 
 
 def hybrid_search(query, query_vec, faiss_index, bm25, chunks, top_k=TOP_K) -> list[dict]:
     """Dense (FAISS cosine) + sparse (BM25), fused with RRF; return 2..top_k chunks.
 
-    After ranking, trailing chunks whose cosine to the query falls below MIN_RELEVANCE
-    are dropped so short keyword queries are not padded with off-topic context.
+    BM25 + dense fusion builds the candidate pool (recall); a relative cosine gap
+    then selects the on-topic chunks (precision), so queries are not padded with
+    off-topic context.
     """
     pool = max(top_k * 2, 10)
     dense = faiss_search(faiss_index, query_vec, pool)
     sparse = bm25_search(bm25, query, pool)
-    fused = reciprocal_rank_fusion([dense, sparse])[:top_k]
-    return _trim_by_relevance(fused, query_vec, faiss_index, chunks, MIN_CHUNKS, MIN_RELEVANCE)
+    fused = reciprocal_rank_fusion([dense, sparse])[:pool]
+    return _trim_by_relevance(fused, query_vec, faiss_index, chunks, MIN_CHUNKS, RELEVANCE_GAP, top_k)
