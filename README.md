@@ -49,6 +49,9 @@ cp .env.example .env                      # then edit .env and paste your real k
 export OPENAI_API_KEY=sk-...              # (alternative to editing .env)
 ```
 
+> `requirements.txt` pins are verified installable on Linux/Windows/macOS (x86_64 + Apple
+> Silicon), CPython 3.11–3.13; `uv.lock` is committed for exact `uv` reproduction.
+
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `OPENAI_API_KEY` | yes | — | OpenAI API key. Loaded from `.env`; never committed. |
