@@ -109,6 +109,12 @@ def test_chunking_floor_holds_with_tiny_section(tmp_path):
     assert all(c["n_tokens"] >= CHUNK_MIN_TOKENS for c in load_and_chunk_document(str(p)))
 
 
+def test_chunking_empty_document_returns_no_chunks(tmp_path):
+    p = tmp_path / "empty.txt"
+    p.write_text("   \n\n  \n", encoding="utf-8")
+    assert load_and_chunk_document(str(p)) == []
+
+
 def test_chunking_has_no_cross_section_bleed(tmp_path):
     # Sections large enough to clear the floor must never share a chunk.
     doc = (

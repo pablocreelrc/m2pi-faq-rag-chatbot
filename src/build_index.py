@@ -44,6 +44,8 @@ def build(faq_path: str = FAQ_PATH, index_dir: str = INDEX_DIR):
     """Run the full indexing pipeline and return (chunks, vectors, meta)."""
     settings = Settings.from_env()
     chunks = load_and_chunk_document(faq_path)                  # Stage 1-2
+    if not chunks:
+        raise RuntimeError(f"No chunks produced from '{faq_path}' — is the document empty?")
     vectors = generate_embeddings([c["text"] for c in chunks], settings=settings)  # Stage 3
     meta = _persist(index_dir, chunks, vectors)                 # Stage 4
     return chunks, vectors, meta

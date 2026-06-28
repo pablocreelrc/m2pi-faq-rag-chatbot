@@ -8,7 +8,8 @@ heading stays with its own content and never bleeds into a neighbouring topic.
 Each chunk is prefixed with its section heading so it carries its own context.
 A final pass hard-splits any over-ceiling chunk and merges any sub-floor chunk
 into a neighbour, so every chunk stays within the 50-500 token window for any
-input document (the merge is a last resort that may join two tiny sections).
+document with at least ~50 tokens of content (a shorter whole document collapses
+to a single chunk; the merge is a last resort that may join two tiny sections).
 """
 from __future__ import annotations
 
