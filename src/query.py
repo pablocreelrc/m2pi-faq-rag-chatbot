@@ -38,8 +38,13 @@ def load_index(index_dir: str = INDEX_DIR):
             f"No index found in '{index_dir}'. Run 'python -m src.build_index' first."
         )
     faiss_index = faiss.read_index(index_path)
-    with open(chunks_path, encoding="utf-8") as fh:
-        chunks = json.load(fh)
+    try:
+        with open(chunks_path, encoding="utf-8") as fh:
+            chunks = json.load(fh)
+    except (json.JSONDecodeError, OSError) as exc:
+        raise RuntimeError(
+            f"Corrupt index file '{chunks_path}': {exc}. Rebuild with 'python -m src.build_index'."
+        ) from exc
     bm25 = build_bm25([c["text"] for c in chunks])
     return faiss_index, bm25, chunks
 
@@ -49,6 +54,8 @@ def answer_question(question, faiss_index, bm25, chunks, client, settings, evalu
 
     The evaluator is isolated: if it fails, the answer is still returned (eval=None).
     """
+    if len(question.strip()) > MAX_QUESTION_CHARS:  # defense for library callers too
+        raise ValueError(f"Question exceeds {MAX_QUESTION_CHARS} characters.")
     qvec = embed_query(question, client=client, settings=settings)                 # Stage 1
     retrieved = hybrid_search(question, qvec, faiss_index, bm25, chunks, settings.top_k)  # Stage 2-3
     answer = generate_answer(question, retrieved, client=client, settings=settings)  # Stage 4

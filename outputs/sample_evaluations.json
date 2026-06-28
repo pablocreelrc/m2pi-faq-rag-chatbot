@@ -2,26 +2,26 @@
   {
     "user_question": "How many vacation days do new employees get in their first year?",
     "score": 10,
-    "reason": "The answer is fully supported by D1, which explicitly states that full-time employees accrue 15 paid vacation days during their first year of employment. D2 is also consistent, noting monthly accrual of 1.25 days per month for first-year employees. The response directly answers the question and does not invent any unsupported details."
+    "reason": "The answer is fully supported by D1, which explicitly states that full-time employees accrue 15 paid vacation days during their first year of employment. D2 is also consistent, noting monthly accrual of 1.25 days per month, which matches 15 days annually. The response is complete and faithful to the retrieved context."
   },
   {
     "user_question": "Can employees carry over unused vacation days to the next year?",
     "score": 10,
-    "reason": "The answer is fully supported by D1, which explicitly states that unused vacation up to a maximum of 5 days can be carried into the next calendar year and any balance above that cap is forfeited on December 31. D2 is relevant background on vacation accrual but does not affect the carryover rule. The response is faithful and complete."
+    "reason": "The answer is fully supported by D1, which explicitly states that unused vacation up to a maximum of 5 days can be carried into the next calendar year and any balance above that cap is forfeited on December 31. D2 is relevant background on vacation accrual but does not contradict the carryover rule. The response directly answers the question and is faithful to the provided context."
   },
   {
     "user_question": "How do I enable Single Sign-On (SSO)?",
     "score": 10,
-    "reason": "The answer is fully supported by the retrieved chunks. D1 and D2 both state that an Owner enables SSO by uploading identity provider metadata under Settings > Security > SSO. D2 also supports the claims about SAML 2.0, Okta, Microsoft Entra ID, Google Workspace, and Business/Enterprise availability. No unsupported facts were invented, and the answer directly addresses how to enable SSO."
+    "reason": "The answer is fully supported by D1: it states SSO uses SAML 2.0, is available on Business and Enterprise plans, and is enabled by an Owner uploading identity provider metadata under Settings > Security > SSO. The answer is faithful and complete for the question, and D2/D3 are irrelevant but do not conflict."
   },
   {
     "user_question": "What does the Business plan cost and what uptime SLA does it include?",
-    "score": 8,
-    "reason": "The answer is faithful on the SLA: both D1 and D2 explicitly say the Business plan includes a 99.9% uptime SLA. However, the cost is not provided in either chunk, so saying it is unavailable is correct. The response is complete for the available information, though it does not give a price because the context does not contain one."
+    "score": 10,
+    "reason": "The answer is fully supported by the retrieved chunks. D2 explicitly states the Business plan costs $12 per seat per month, and D1 states the Business plan includes a 99.9 percent uptime SLA. The response is complete and faithful, with no invented details."
   },
   {
     "user_question": "How do I request time off?",
     "score": 10,
-    "reason": "The answer is fully supported by the retrieved chunks. D2 explicitly states the exact steps to request time off: open the Time Off tab, select dates, choose leave type, and submit. D1 and D2 both confirm the request is routed to the manager for approval. The response is complete and faithful, with no invented details."
+    "reason": "The answer is fully supported by D2, which explicitly says employees open the Time Off tab, select dates, choose the leave type, and submit; it also matches D1/D2 that the request is routed to the manager for approval. The chunks are highly relevant, and the response is complete for the question."
   }
 ]

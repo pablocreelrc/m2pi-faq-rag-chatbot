@@ -93,10 +93,27 @@ def test_chunking_splits_oversized_sentence(tmp_path):
     assert all(c["n_tokens"] <= CHUNK_MAX_TOKENS for c in chunks)
 
 
+def test_chunking_ceiling_holds_for_adjacent_long_sentences(tmp_path):
+    # Two large sentences must not combine (via overlap) into an over-ceiling chunk.
+    doc = "Big Section\n\n" + " ".join(["alpha"] * 300) + ". " + " ".join(["beta"] * 300) + "."
+    p = tmp_path / "c.txt"
+    p.write_text(doc, encoding="utf-8")
+    assert all(c["n_tokens"] <= CHUNK_MAX_TOKENS for c in load_and_chunk_document(str(p)))
+
+
+def test_chunking_floor_holds_with_tiny_section(tmp_path):
+    # A tiny standalone section must be merged so no chunk falls below the floor.
+    doc = "Tiny\n\nHi.\n\nMain Section\n\n" + ("This is a normal policy sentence. " * 12)
+    p = tmp_path / "f.txt"
+    p.write_text(doc, encoding="utf-8")
+    assert all(c["n_tokens"] >= CHUNK_MIN_TOKENS for c in load_and_chunk_document(str(p)))
+
+
 def test_chunking_has_no_cross_section_bleed(tmp_path):
+    # Sections large enough to clear the floor must never share a chunk.
     doc = (
-        "Alpha Section\n\nApple apple apple. Apple apple apple apple.\n\n"
-        "Beta Section\n\nBanana banana banana. Banana banana banana banana."
+        "Alpha Section\n\n" + ("Apple is a sweet red fruit grown in orchards. " * 10) + "\n\n"
+        "Beta Section\n\n" + ("Banana is a soft yellow tropical fruit. " * 10)
     )
     p = tmp_path / "d.txt"
     p.write_text(doc, encoding="utf-8")

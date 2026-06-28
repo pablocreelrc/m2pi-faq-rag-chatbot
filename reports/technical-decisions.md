@@ -18,7 +18,7 @@ sentence splitter glues a heading onto the previous section's text — e.g. a se
 ending "...revokes their access. Single Sign-On and Security PeopleFlow supports..." would let a
 security chunk score highly on a vacation query (cross-topic bleed). Sectioning prevents that and
 gives each chunk its own heading as context. Token counts use `tiktoken` (cl100k_base), matching how
-the embedding model sees text. On the supplied document this yields **23 chunks of 55–126 tokens**.
+the embedding model sees text. On the supplied document this yields **21 chunks of 57–126 tokens**.
 
 ## Embeddings: OpenAI `text-embedding-3-small`, L2-normalized
 

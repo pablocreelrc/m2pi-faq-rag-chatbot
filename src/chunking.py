@@ -6,8 +6,9 @@ greedily packed into ~CHUNK_TARGET_TOKENS chunks with a CHUNK_OVERLAP_TOKENS
 sentence overlap, and text is NEVER carried across a section boundary -- so a
 heading stays with its own content and never bleeds into a neighbouring topic.
 Each chunk is prefixed with its section heading so it carries its own context.
-Over-long sentences are hard-split and sub-floor chunks are merged, so every
-chunk stays within the 50-500 token window for any input document.
+A final pass hard-splits any over-ceiling chunk and merges any sub-floor chunk
+into a neighbour, so every chunk stays within the 50-500 token window for any
+input document (the merge is a last resort that may join two tiny sections).
 """
 from __future__ import annotations
 
@@ -72,13 +73,20 @@ def _parse_sections(text: str) -> list[tuple[str, list[str]]]:
     return sections
 
 
-def _split_long_sentence(sentence: str) -> list[str]:
-    """Hard-split a sentence exceeding the ceiling into token windows."""
-    tokens = _ENCODER.encode(sentence)
-    if len(tokens) <= CHUNK_MAX_TOKENS:
-        return [sentence]
-    step = CHUNK_TARGET_TOKENS
-    return [_ENCODER.decode(tokens[i : i + step]).strip() for i in range(0, len(tokens), step)]
+def _enforce_ceiling(chunks: list[str]) -> list[str]:
+    """Hard-split any chunk above the ceiling into token windows (final safety net)."""
+    out: list[str] = []
+    for chunk in chunks:
+        tokens = _ENCODER.encode(chunk)
+        if len(tokens) <= CHUNK_MAX_TOKENS:
+            out.append(chunk)
+            continue
+        step = CHUNK_TARGET_TOKENS
+        out.extend(
+            _ENCODER.decode(tokens[i : i + step]).strip()
+            for i in range(0, len(tokens), step)
+        )
+    return out
 
 
 def _overlap_tail(sentences: list[str], overlap_tokens: int) -> tuple[list[str], int]:
@@ -86,7 +94,7 @@ def _overlap_tail(sentences: list[str], overlap_tokens: int) -> tuple[list[str],
     tail, total = [], 0
     for sent in reversed(sentences):
         st = count_tokens(sent)
-        if tail and total + st > overlap_tokens:
+        if total + st > overlap_tokens:  # never carry an oversize sentence as overlap
             break
         tail.insert(0, sent)
         total += st
@@ -109,7 +117,7 @@ def _pack(sentences: list[str], target: int, overlap: int) -> list[str]:
 
 
 def _merge_short(chunks: list[str]) -> list[str]:
-    """Fold any sub-floor chunk into an adjacent one (within the same section)."""
+    """Fold any sub-floor chunk into an adjacent one so the 50-token floor holds."""
     i = 0
     while i < len(chunks):
         if len(chunks) > 1 and count_tokens(chunks[i]) < CHUNK_MIN_TOKENS:
@@ -134,10 +142,10 @@ def load_and_chunk_document(
         text = _sanitize(fh.read())
     chunks: list[str] = []
     for heading, sentences in _parse_sections(text):
-        flat = [piece for s in sentences for piece in _split_long_sentence(s)]
-        bodies = _pack(flat, target_tokens, overlap_tokens)
-        section_chunks = [f"{heading}. {b}" if heading else b for b in bodies]
-        chunks.extend(_merge_short(section_chunks))
+        for body in _pack(sentences, target_tokens, overlap_tokens):
+            chunks.append(f"{heading}. {body}" if heading else body)
+    # Final safety net: guarantee 50-500 tokens for ANY input (ceiling then floor).
+    chunks = _merge_short(_enforce_ceiling(chunks))
     return [
         {"id": f"chunk_{i:03d}", "text": chunk, "n_tokens": count_tokens(chunk)}
         for i, chunk in enumerate(chunks)

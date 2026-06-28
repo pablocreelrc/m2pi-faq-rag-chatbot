@@ -9,7 +9,7 @@
   },
   {
     "user_question": "Can employees carry over unused vacation days to the next year?",
-    "system_answer": "Yes. Unused vacation can be carried into the next calendar year, up to a maximum of 5 days. Any balance above 5 days is forfeited on December 31.",
+    "system_answer": "Yes. Unused vacation can be carried into the next calendar year up to a maximum of 5 days; any amount above that cap is forfeited on December 31.",
     "chunks_related": [
       "Time Off and Leave Policies. Vacation accrues monthly, so a first-year employee earns 1.25 days per month. Unused vacation up to a maximum of 5 days can be carried into the next calendar year; any balance above that cap is forfeited on December 31. Employees also receive 10 paid sick days per year, which do not carry over.",
       "Time Off and Leave Policies. Full-time employees accrue 15 paid vacation days during their first year of employment. Accrual increases to 20 days after three years of service and to 25 days after seven years. Vacation accrues monthly, so a first-year employee earns 1.25 days per month."
@@ -17,18 +17,19 @@
   },
   {
     "user_question": "How do I enable Single Sign-On (SSO)?",
-    "system_answer": "Single Sign-On (SSO) is enabled by an Owner uploading the identity provider metadata in Settings > Security > SSO. PeopleFlow supports SSO through SAML 2.0 and integrates with Okta, Microsoft Entra ID, and Google Workspace. SSO is available on the Business and Enterprise plans.",
+    "system_answer": "PeopleFlow supports SSO through SAML 2.0 on the Business and Enterprise plans. To enable it, an Owner uploads the identity provider metadata in Settings > Security > SSO.",
     "chunks_related": [
-      "Single Sign-On and Security. To enable it, an Owner uploads the identity provider metadata under Settings, then Security, then SSO. When SSO is enforced, password login is disabled for all members except the Owner, who keeps a break-glass password in case the identity provider is unavailable. Multi-factor authentication (MFA) is strongly recommended and can be required for all users by an Owner. PeopleFlow supports authenticator apps (TOTP) and hardware security keys.",
-      "Single Sign-On and Security. PeopleFlow supports Single Sign-On (SSO) through SAML 2.0 and integrates with Okta, Microsoft Entra ID, and Google Workspace. SSO is available on the Business and Enterprise plans. To enable it, an Owner uploads the identity provider metadata under Settings, then Security, then SSO."
+      "Single Sign-On and Security. PeopleFlow supports Single Sign-On (SSO) through SAML 2.0 and integrates with Okta, Microsoft Entra ID, and Google Workspace. SSO is available on the Business and Enterprise plans. To enable it, an Owner uploads the identity provider metadata under Settings, then Security, then SSO.",
+      "Single Sign-On and Security. When SSO is enforced, password login is disabled for all members except the Owner, who keeps a break-glass password in case the identity provider is unavailable. Multi-factor authentication (MFA) is strongly recommended and can be required for all users by an Owner. PeopleFlow supports authenticator apps (TOTP) and hardware security keys. The platform is SOC 2 Type II certified and is GDPR compliant.",
+      "Single Sign-On and Security. The platform is SOC 2 Type II certified and is GDPR compliant. All data is encrypted in transit using TLS 1.2 or higher and encrypted at rest using AES-256. Customer data is hosted in regional data centers; Enterprise customers can choose between United States and European Union data residency."
     ]
   },
   {
     "user_question": "What does the Business plan cost and what uptime SLA does it include?",
-    "system_answer": "I do not have the Business plan cost in the provided information. The Business plan includes a 99.9 percent uptime SLA.",
+    "system_answer": "The Business plan costs $12 per seat per month and includes a 99.9 percent uptime SLA.",
     "chunks_related": [
       "Plans, Billing, and Support. Billing is monthly or annual, and annual billing includes a 15 percent discount. Only the Owner can change the plan or update payment details, under Settings, then Billing. The Business plan includes a 99.9 percent uptime service level agreement (SLA), and the Enterprise plan includes a 99.95 percent uptime SLA with priority support.",
-      "Plans, Billing, and Support. The Business plan includes a 99.9 percent uptime service level agreement (SLA), and the Enterprise plan includes a 99.95 percent uptime SLA with priority support. Standard support responds to tickets within one business day, while priority support targets a four-hour response during business hours. To reach support, open the Help menu and select Contact Support, or email support@peopleflow.example. Plans, Billing, and Support. To reach support, open the Help menu and select Contact Support, or email support@peopleflow.example. Status and incident history are published at status.peopleflow.example."
+      "Plans, Billing, and Support. PeopleFlow offers three plans. The Starter plan costs $6 per seat per month and includes core records and time off. The Business plan costs $12 per seat per month and adds SSO, performance reviews, and integrations. The Enterprise plan offers custom pricing and adds data residency choices, custom reports, and a dedicated success manager. Billing is monthly or annual, and annual billing includes a 15 percent discount."
     ]
   },
   {

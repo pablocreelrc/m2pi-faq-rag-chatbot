@@ -20,8 +20,8 @@ chunks, retrieves the most relevant ones, and has an LLM generate a grounded ans
 
 ## What it does
 
-- **Indexing pipeline** — loads the FAQ document, chunks it (heading-aware, 23 chunks of
-  55–126 tokens), embeds every chunk with OpenAI, and stores a FAISS index + chunk text (JSON) on disk.
+- **Indexing pipeline** — loads the FAQ document, chunks it (heading-aware, 21 chunks of
+  57–126 tokens), embeds every chunk with OpenAI, and stores a FAISS index + chunk text (JSON) on disk.
 - **Query pipeline** — embeds the question, runs **hybrid retrieval** (dense FAISS cosine search
   fused with lexical BM25 via Reciprocal Rank Fusion), assembles the top chunks into context, and
   the LLM generates a grounded answer as strict three-key JSON.
@@ -66,7 +66,7 @@ Run from the repository root:
 ```bash
 # Step 1 — build the index from data/faq_document.txt
 python -m src.build_index
-# -> Indexed 23 chunks (23 embeddings, dim=1536) | tokens 55-126 -> index/
+# -> Indexed 21 chunks (21 embeddings, dim=1536) | tokens 57-126 -> index/
 
 # Step 2 — ask a question (answer prints as JSON to stdout)
 python -m src.query "How many vacation days do new employees get?"
@@ -106,7 +106,7 @@ More detail in [`reports/technical-decisions.md`](reports/technical-decisions.md
 ## Project layout
 
 ```
-data/faq_document.txt        source FAQ document (>=1000 words, yields 23 chunks)
+data/faq_document.txt        source FAQ document (>=1000 words, yields 21 chunks)
 src/config.py                settings (env) + tunable chunking/retrieval constants
 src/llm.py                   OpenAI client + retry-with-backoff wrapper
 src/chunking.py              load + heading-aware chunking (load_and_chunk_document)
